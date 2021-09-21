@@ -1,0 +1,324 @@
+import time
+print("*")
+start_time = time.time()
+print("*")
+import csv
+print("*")
+import sqlite3
+print("sqlite")
+
+
+#tables to iterate through
+
+Table_Names = ['SP7_01_2019']
+
+#Don't forget to multiply for tables
+Path_Names = [\
+r"G:\Documents\Analytics_v2\SP2_01_Doc.txt"
+]
+
+#Don't forget to multiply for tables
+Database_Names = [r"G:\Documents\Analytics\Recon\SP7_JE_2019.db"] 
+
+
+Export_Path_Names = [r"G:\Documents\Analytics_v2\export2.csv"]
+
+
+#Variables for inserting function
+
+CSV_Seperator = '|' #\t tab
+
+CSV_Encoding = 'utf-8'
+
+Error_Detection = 'ignore'
+
+ROWS_AT_ONCE = 100000
+
+FIELDS_COUNT = 50
+
+# quoting=csv.QUOTE_NONE  quotechar='"' Quote Character none or " is what I use most often I keep it here in the comments just in case
+
+
+
+
+
+def connect_DB(Database_Name):
+    global conn
+    conn = sqlite3.connect(Database_Name)
+    global curr
+    curr = conn.cursor()
+
+def create_func(Table_Name):
+    curr.executescript(
+    '''CREATE TABLE IF NOT EXISTS '''+Table_Name+'''(
+    Column_01     TEXT,
+    Column_02     TEXT,
+    Column_03     TEXT,
+    Column_04     TEXT,
+    Column_05     TEXT,
+    Column_06     TEXT,
+    Column_07     TEXT,
+    Column_08     TEXT,
+    Column_09     TEXT,
+    Column_10     TEXT,
+    Column_11     TEXT,
+    Column_12     TEXT,
+    Column_13     TEXT,
+    Column_14     TEXT,
+    Column_15     TEXT,
+    Column_16     TEXT,
+    Column_17     TEXT,
+    Column_18     TEXT,
+    Column_19     TEXT,
+    Column_20     TEXT,
+    Column_21     TEXT,
+    Column_22     TEXT,
+    Column_23     TEXT,
+    Column_24     TEXT,
+    Column_25     TEXT,
+    Column_26     TEXT,
+    Column_27     TEXT,
+    Column_28     TEXT,
+    Column_29     TEXT,
+    Column_30     TEXT,
+    Column_31     TEXT,
+    Column_32     TEXT,
+    Column_33     TEXT,
+    Column_34     TEXT,
+    Column_35     TEXT,
+    Column_36     TEXT,
+    Column_37     TEXT,
+    Column_38     TEXT,
+    Column_39     TEXT,
+    Column_40     TEXT,
+    Column_41     TEXT,
+    Column_42     TEXT,
+    Column_43     TEXT,
+    Column_44     TEXT,
+    Column_45     TEXT,
+    Column_46     TEXT,
+    Column_47     TEXT,
+    Column_48     TEXT,
+    Column_49     TEXT,
+    Column_50     TEXT
+    );
+    ''')
+    conn.commit() 
+
+def batch_csv_insert(Path_Name, Table_Name):
+    csv_pointer = open(Path_Name, encoding=CSV_Encoding, errors=Error_Detection)
+    csv_reader = csv.reader(
+        csv_pointer,
+        delimiter=CSV_Seperator,
+        quoting=csv.QUOTE_NONE
+        
+    )
+    batch = list()
+    # for each row in csv reader
+    for row in csv_reader:
+        # append the processed row to the batch list
+        # processed row meaning we strip down the fields to remove redundant data
+        # and add Nones if the length of the row is not up to the FIELDS_COUNT
+        batch.append([k.strip() for k in row] + [None] * (FIELDS_COUNT - len(row)))
+        # check if the batch length is greater than ROWS_AT_ONCE
+        if len(batch) >= ROWS_AT_ONCE:
+            # if it is use the executemany over the cursor to insert the data in the batch list to the database
+            curr.executemany(insert_func(Table_Name), batch)
+            # commit
+            conn.commit()
+            # set the batch to empty list again
+            batch = list()
+    # if the batch list is not empty
+    if batch:
+        # if it is use the executemany over the cursor to insert the data in the batch list to the database
+        curr.executemany(insert_func(Table_Name), batch)
+        # commit
+        conn.commit()
+    # delete batch (just incase the program message up and it need to delete the batch)
+    del batch
+
+
+def insert_func(Table_Name):
+    return'''
+    INSERT OR IGNORE INTO '''+Table_Name+'''(
+    Column_01,
+    Column_02,
+    Column_03,
+    Column_04,
+    Column_05,
+    Column_06,
+    Column_07,
+    Column_08,
+    Column_09,
+    Column_10,
+    Column_11,
+    Column_12,
+    Column_13,
+    Column_14,
+    Column_15,
+    Column_16,
+    Column_17,
+    Column_18,
+    Column_19,
+    Column_20,
+    Column_21,
+    Column_22,
+    Column_23,
+    Column_24,
+    Column_25,
+    Column_26,
+    Column_27,
+    Column_28,
+    Column_29,
+    Column_30,
+    Column_31,
+    Column_32,
+    Column_33,
+    Column_34,
+    Column_35,
+    Column_36,
+    Column_37,
+    Column_38,
+    Column_39,
+    Column_40,
+    Column_41,
+    Column_42,
+    Column_43,
+    Column_44,
+    Column_45,
+    Column_46,
+    Column_47,
+    Column_48,
+    Column_49,
+    Column_50
+
+
+    )
+    VALUES (
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?
+    );'''
+
+def close_DB():
+    # commit
+    conn.commit()
+    # close the cursor
+    curr.close()
+    # close the connection
+    conn.close()  
+
+
+def batch_csv_export(Export_Path_Name, Table_Name):
+    curr.execute(
+    '''
+    SELECT
+    *
+    FROM '''+Table_Name+'''
+    
+    ;
+    '''
+    )
+    headers = list(map(lambda x: x[0], curr.description))
+    headers = tuple(headers)
+    csv_w_pointer = open(Export_Path_Name, 'a' , newline='', errors=Error_Detection)
+    csv_writer = csv.writer(csv_w_pointer, delimiter='\t', quotechar='"')
+    csv_writer.writerow(headers)
+    while True:
+        rows = curr.fetchmany(ROWS_AT_ONCE)
+        if not rows:
+            break
+        csv_writer.writerows(rows)
+            
+
+
+
+    
+#Create and/or Import Table
+
+for Table_Name, Path_Name, Database_Name in zip(Table_Names, Path_Names, Database_Names):
+    connect_DB(Database_Name)
+    
+    
+    create_func(Table_Name)
+    print('Table Created' + Table_Name +  "--- %s seconds ---" % (time.time() - start_time))
+    
+    batch_csv_insert(Path_Name, Table_Name)
+    print('Import Complete' + Table_Name +  "--- %s seconds ---" % (time.time() - start_time))
+
+    close_DB()
+    
+    print("--- %s seconds ---" % (time.time() - start_time))
+
+
+
+
+
+for Table_Name, Path_Name, Database_Name, Export_Path_Name in zip(Table_Names, Path_Names, Database_Names, Export_Path_Names):
+    connect_DB(Database_Name)
+    
+    print('Export Started' + Table_Name +  "--- %s seconds ---" % (time.time() - start_time))
+    batch_csv_export(Export_Path_Name, Table_Name)
+    print('Export Complete' + Table_Name +  "--- %s seconds ---" % (time.time() - start_time))
+
+    close_DB()
+    
+    print("--- %s seconds ---" % (time.time() - start_time))
+
+
+
+
+#end
+
+print("--- %s seconds ---" % (time.time() - start_time) + 'Program Complete')
+
+
+
+
